@@ -10,6 +10,8 @@ float average_quality(int, int, int);
 
 void riffle_once(void* L, int len, int size, void* work) 
 {
+    // Sets the seed for random
+    srand(time(NULL));
     /* Initialising the A and B deck */
     int midpoint = len / 2;
     char* A = (char*)L;
@@ -177,7 +179,7 @@ float quality(int *numbers, int len)
 
 float average_quality(int N, int shuffles, int trials)
 {
-    
+    int *nums = malloc(N * sizeof(int));
     float qual_total = 0;
     
     // For num of trials 
@@ -185,7 +187,6 @@ float average_quality(int N, int shuffles, int trials)
     for(i=0;i<trials;i++)
     {
         // Generate an array of numbers from 0 to N-1
-        int *nums = malloc(N * sizeof(int));
         int i;
         for(i=0;i<N;i++)
         {
@@ -197,14 +198,12 @@ float average_quality(int N, int shuffles, int trials)
         riffle(nums, N, sizeof(int), shuffles);
         // Add quality to running total
         qual_total += quality(nums, N);
-
-        free(nums);
     }
+    free(nums);
     // Divide by number of trials    
     float avg_qual = qual_total / (float)trials;
     // Return average
     return avg_qual;
-
 }
 
 /*
