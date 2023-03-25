@@ -1,0 +1,4 @@
+Below are some statistics generated about the number of turns taken from playing games with 2,3..,10 players, playing 100 games with each number of players
+Shortest: 37
+Longest: 996
+Average: 273.000000

@@ -8,3 +8,7 @@ NOTES:
 PIGLATIN:
 
 - Add a check for capital vowels/ys
+
+- ADD UPDATED RIFFLE TO Q3
+- REMEBER TO SRAND
+- ADD A QUALITY.txt to Q2

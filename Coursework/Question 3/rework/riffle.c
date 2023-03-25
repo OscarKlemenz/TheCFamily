@@ -1,10 +1,3 @@
-/* Program: riffle.c
- *  --------------
- *  riffle.c is the main driver for shuffling a list of
- *  elements
- * 
- *  Author: Oscar Klemenz
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -13,26 +6,18 @@
 
 void riffle_once(void* L, int len, int size, void* work) 
 {
-    /* Procedure: riffle_once
-     * ----------------------
-     * Performs a single riffle shuffle on list L  
-     *
-     * L: List to be shuffled
-     * len: Length of list L
-     * size: Size of each item in list L
-     * work: Auxillary array to perform work while shuffling
-    */
-
-    // Initialising the A and B deck
+    // Sets the seed for random
+    srand(time(NULL));
+    /* Initialising the A and B deck */
     int midpoint = len / 2;
     char* A = (char*)L;
     char* B = A + midpoint * size;
-    // Counters to check when end of A and B are reached
+    /* Counters to check when end of A and B are reached */
     int Aindex = 0;
     int Bindex = midpoint;
 
     while (Aindex < midpoint && Bindex < len) {
-        // Randomly picks between A and B 
+        /* Randomly picks between A and B */
         if (rand() % 2 == 0) {
             memcpy(work, A, size);
             A += size;
@@ -45,7 +30,7 @@ void riffle_once(void* L, int len, int size, void* work)
         }
         work = (char*)work + size;
     }
-    // Populates work with remainder of cards
+    /* Populates work with remainder of cards */
     while (Aindex < midpoint) {
         memcpy(work, A, size);
         A += size;
@@ -58,9 +43,8 @@ void riffle_once(void* L, int len, int size, void* work)
         Bindex++;
         work = (char*)work + size;
     }
-    // Returns to the start of work
     work = (char*)work - len * size;
-    // Populates L with the new cards
+    /* Populates L with the new cards */
     for (int i = 0; i < len; i++) {
         memcpy(L, work, size);
         L = (char*)L + size;
@@ -72,21 +56,10 @@ void riffle_once(void* L, int len, int size, void* work)
 
 void riffle(void *L, int len, int size, int N)
 {
-    /* Procedure: riffle
-     * -----------------
-     * Using riffle_once, performs N riffle shuffles on list L
-     * 
-     * L: List to be shuffled
-     * len: Length of list L
-     * size: Size of each item in list L
-     * N: number of times riffle_once is called
-    */
     // Create a work array of the same size
     int *work = (int *)malloc(len * size);
     if (work == NULL) {
-        // Failed to allocate memory, return failure
-        printf("Error! Could not allocate memory\n");
-        exit(-1);
+        // Failed to allocate memory, return failure, PLACE SOME ERROR CJHECKING HERE
     }
 
     int i;
@@ -100,37 +73,19 @@ void riffle(void *L, int len, int size, int N)
 
 int check_shuffle(void *L, int len, int size, int (* cmp)(void *, void *))
 {
-    /* Function: check_shuffle
-     * -----------------------
-     * Checks that all the elements in list L are still contained in L
-     * after a riffle shuffle is performed.
-     * 
-     * L: List to be shuffled
-     * len: Length of list L
-     * size: Size of each item in list L
-     * cmp: Function to check each element is still contained in the list
-     * 
-     * Returns: 1 if all elements are still there, 0 if not
-    */
     if (L == NULL || len < 2 || size < 1 || cmp == NULL) {
-        // Invalid input, return failure
-        printf("Error! Invalid input\n");
-        exit(-1);
+        return 0; // Invalid input, return failure
     }
-    // Allocate temporary buffer for riffle
-    char *work = malloc(len * size);
+
+    char *work = malloc(len * size); // Allocate temporary buffer for riffle
     if (work == NULL) {
-        // Failed to allocate memory, return failure
-        printf("Error! Could not allocate memory\n");
-        exit(-1);
+        return 0; // Failed to allocate memory, return failure
     }
 
     char *original = malloc(len * size);
     if (original == NULL)
     {
-        // Failed to allocate memory, return failure
-        printf("Error! Could not allocate memory\n");
-        exit(-1);
+        return 0; // Failed to allocate memory, return failure
     }
 
     // Copy the original array for comparison
@@ -138,12 +93,10 @@ int check_shuffle(void *L, int len, int size, int (* cmp)(void *, void *))
     // Perform the riffle shuffle once
     riffle_once(L, len, size, work);
     // Check that all elements from the original array are in the shuffled array
-    int i;
-    int j;
-    for (i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         void *elem = L + i * size;
         int found = 0;
-        for (j = 0; j < len; j++) {
+        for (int j = 0; j < len; j++) {
             if (cmp(elem, original + j * size) == 0) {
                 found = 1;
                 break;
@@ -156,10 +109,10 @@ int check_shuffle(void *L, int len, int size, int (* cmp)(void *, void *))
         }
     }
     // Check that all elements in the shuffled array are in the original array
-    for (i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         void *elem = original + i * size;
         int found = 0;
-        for (j = 0; j < len; j++) {
+        for (int j = 0; j < len; j++) {
             if (cmp(elem, L + j * size) == 0) {
                 found = 1;
                 break;
@@ -181,48 +134,25 @@ int check_shuffle(void *L, int len, int size, int (* cmp)(void *, void *))
     return 1;
 }
 
+// Compare two integers pointed to by void pointers
 int cmp_int(void *a, void *b) {
-    /* Function: cmp_int
-     * -----------------
-     * Compares two integers
-     * 
-     * a, b: Integers to be compared
-     * 
-     * Returns:  -1 if a > b, 0 if a = b, and 1 if a < b
-    */
+    // Cast the values
     int x = *(int *)a;
     int y = *(int *)b;
-    return x > y ? -1 : (x < y ? 1 : 0);
+    return x > y ? 1 : (x < y ? -1 : 0);
 }
 
-
+// Compare two strings pointed to by void pointers
 int cmp_str(void *a, void *b) {
-    /* Function: cmp_str
-     * -----------------
-     * Compares two chars
-     * 
-     * a, b: Chars to be compared
-     * 
-     * Returns: If equal will return a 0, if not returns a 1
-    */
     char *x = *(char **)a;
     char *y = *(char **)b;
+    // If equal will return a 0, if not returns a 1
     return strcmp(x, y);
 }
 
 float quality(int *numbers, int len)
 {
-    /* Function: quality
-     * -----------------
-     * - Checks the quality of a list of ints
-     * - Quality is checked by if an element is less than the next one
-     * - Quality will be smaller when less are in order
-     * 
-     * numbers: List of numbers to check
-     * len: Length of list
-     * 
-     * Returns: Float value representing the quality of shuffle
-    */
+    // Check if each number is greater than the previous one
     int total = 0;
     int comparisons = (len - 1);
     int i;
@@ -230,37 +160,24 @@ float quality(int *numbers, int len)
     {
         int prev = *numbers;
         numbers++;
-        if(prev < *numbers)
+        int curr = *numbers;
+        // For each that is greater than previous
+        if(prev < curr)
+        {
             total++;
+        }
     }
-    // Quality is total / comparisons
+    // Quality is then total / comparisons
     return ((float)total / (float)comparisons);
     
 }
 
 float average_quality(int N, int shuffles, int trials)
 {
-    /* Function: average_quality
-     * -------------------------
-     * Calculates the average quality of an array of length N
-     * over a number of trials, with each trial having a specified
-     * amount of shuffles
-     * 
-     * N: Length of list of nums
-     * shuffles: How many times to shuffle on each trial
-     * trials: How many trials to perform to get the average
-     * 
-     * Returns: Float value representing the average quality from the trials
-     *    
-    */
     int *nums = malloc(N * sizeof(int));
-    if (nums == NULL) {
-        // Failed to allocate memory, return failure
-        printf("Error! Could not allocate memory\n");
-        exit(-1);
-    }
     float qual_total = 0;
     
+    // For num of trials 
     int i;
     for(i=0;i<trials;i++)
     {

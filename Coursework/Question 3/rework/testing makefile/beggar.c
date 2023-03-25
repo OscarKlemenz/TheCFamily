@@ -1,28 +1,18 @@
+/* Program: beggar.c
+ * -----------------
+ * Contains functions to play beggar your neighbour, and any auxillary 
+ * functions such, as queue functions, to deal with my chosen data structure
+ * 
+ * Note: For some of the smaller functions, rather than a large docstring explaination
+ * I have just included a small comment above describing what it does, as some functions
+ * are fairly obvious.
+ * 
+ * Author: Oscar Klemenz
+*/
 #include <stdio.h>
 #include <stdlib.h>
-#include "riffle.h"
-// MAX_SIZE is 52, as max possible amount of cards is 52
-#define MAX_SIZE 52
-
-struct Queue {
-    int arr[MAX_SIZE];
-    int front, rear;
-};
-typedef struct Queue QUEUE;
-
-void initQueue(QUEUE *);
-int isEmpty(QUEUE *);
-int isFull(QUEUE *);
-void enqueue(QUEUE *, int);
-int dequeue(QUEUE *);
-int peek(QUEUE *);
-int peekBack(QUEUE *);
-void printQueue(QUEUE *);
-int finished(QUEUE *, int);
-QUEUE take_turn(QUEUE *, QUEUE *);
-int beggar(int, int *, int);
-void deckOutput(QUEUE *, QUEUE *, int, int);
-
+#include <limits.h>
+#include "beggar.h"
 
 // Function to initialize a new queue
 void initQueue(QUEUE *q) {
@@ -72,13 +62,6 @@ int dequeue(QUEUE *q) {
     return element;
 }
 
-// Checks the card at the front of the queue
-int peek(QUEUE *q)
-{
-    int element = q->arr[q->front];
-    return element;
-}
-
 // Checks card at the back of the queue
 int peekBack(QUEUE *q)
 {
@@ -104,9 +87,17 @@ void printQueue(QUEUE *q) {
     printf("%d\n", q->arr[q->rear]);
 }
 
-// Checks if only one player has cards left
 int finished(QUEUE *players, int Nplayers)
 {
+    /* Function: finished
+     * ------------------
+     * Checks if only one player has cards left
+     * 
+     * players: list of players cards
+     * Nplayers: number of players
+     * 
+     * Returns: 1 if one player left, 0 if not
+    */
     int numEmpty = 0;
     int withCards = -1;
     // Loop through all players
@@ -129,69 +120,93 @@ int finished(QUEUE *players, int Nplayers)
         return 0;
 }
 
-// Checks if the card is a picture card
 int checkCard(QUEUE *pile)
 {
-    // peek card just added
+    /* Function: checkCard
+     * -------------------
+     * Checks if the card is a picture card (11,12,13,14)
+     * 
+     * pile: Center pile
+     * 
+     * Returns: 0 if not a picture card, if it is the 2nd digit is returned
+    */
     int top = peekBack(pile);
-    // Mod by 10 and return remainder
     if (top > 10)
         return (top % 10);
     else
         return 0;
 }
 
-// Takes a turn for a player
+void giveCards(QUEUE *dequeuePile, QUEUE *enqueuePile)
+{
+    /* Procedure: giveCards
+     * -------------------
+     * Swaps a card from one queue to another
+     * 
+     * dequeuePile: Pile to take a card from
+     * enqueuePile: Pile to add a card to
+    */
+    int card = dequeue(dequeuePile);
+    enqueue(enqueuePile, card);
+}
+
 QUEUE take_turn(QUEUE *player, QUEUE *pile)
 {
+    /* Function: take_turn
+     * -------------------
+     * Takes a single turn for a player
+     * 
+     * player: player taking the turn
+     * pile: center pile of cards
+     * 
+     * Returns: If a player has to lay out penalty cards a reward will
+     * be returned for the previous player to have
+    */
     QUEUE reward;
     initQueue(&reward);
-    // Check the top card - Make function to do this
+    // Checks the top card
     int top = checkCard(pile);
-    // If return non-zero
+    // If top is a picture card, current player has a penalty
     if (top > 0)
     {
-        // loop for the number returned
+        // loop for the number of penalty cards to be laid
         int i;
         for(i=0;i<top;i++)
         {
-            // Checks the player hasn't ran out of cards during
-            // penalty
+            // Checks the player hasn't ran out of cards during the penalty
             if(!isEmpty(player))
             {
                 // Add card to pile
-                int card = dequeue(player);
-                enqueue(pile, card);
+                giveCards(player, pile);
                 // Check players card each turn
                 int newTop = checkCard(pile);
+                // pentaly card, no reward, next player
                 if(newTop > 0)
-                {
-                    // pentaly card, no reward, next player
                     return reward;
-                }
             }
         }
         // Make whole pile reward
         while(!isEmpty(pile))
-        {
-            // Dequeue pile and enqueue to reward
-            int card = dequeue(pile);
-            enqueue(&reward, card);
-        }
+            giveCards(pile, &reward);
     }
-    // else If is zero
+    // If the top card is not a picture card, player lays a single card
     else
-    {
-        // lay one card
-        int card = dequeue(player);
-        enqueue(pile, card);  
-    }     
-    // return no reward
+        giveCards(player, pile);
+    
     return reward;
 }
 
 void deckOutput(QUEUE *pile, QUEUE *players, int currPlayer, int Nplayers)
 {
+    /* Procedure: deckOutput
+     * --------------------
+     * Prints the current state of the pile and players hands, with some formatting
+     * 
+     * pile: Center pile
+     * players: List of players hands
+     * currPlayer: The player who is currently playing
+     * Nplayers: Number of players
+    */
     printf("Pile: ");
     printQueue(pile);
     int y;
@@ -209,6 +224,16 @@ void deckOutput(QUEUE *pile, QUEUE *players, int currPlayer, int Nplayers)
 // Main driver function for beggar your neighbour game
 int beggar(int Nplayers, int *deck, int talkative)
 {   
+    /* Function: beggar
+     * ----------------
+     * Main driver for the beggar your neighbour game
+     * 
+     * Nplayers: Number of players
+     * deck: Starting deck of cards (already shuffled)
+     * talkative: 0 for no console output, 1 for console output
+     * 
+     * Returns: Number of turns
+    */
     int turns = 1;
     QUEUE *players = (QUEUE *)malloc(Nplayers * sizeof(QUEUE));
     // Initialise player decks
@@ -235,7 +260,8 @@ int beggar(int Nplayers, int *deck, int talkative)
     initQueue(&pile);
 
     currPlayer = 0;
-    printf("Turn %d\n", turns);
+    if(talkative)
+        printf("Turn %d\n", turns);
     // While theres more than one player left
     while(!finished(players, Nplayers))
     {
@@ -287,7 +313,6 @@ int beggar(int Nplayers, int *deck, int talkative)
                     else
                         reciever--;
                 } while (isEmpty(&players[reciever]));
-
             }
             else if (penaltyTurn)
             {   
@@ -295,12 +320,7 @@ int beggar(int Nplayers, int *deck, int talkative)
             }
 
             while(!isEmpty(&reward))
-            {
-                // Give to previous player
-                int card = dequeue(&reward);
-                // PRINT OFF CARDS 
-                enqueue(&players[reciever], card);
-            }
+                giveCards(&reward, &players[reciever]);
 
             turns++;
             if(talkative)
@@ -333,12 +353,17 @@ int beggar(int Nplayers, int *deck, int talkative)
     return turns;
 }
 
-int main()
+STATS *statistics(int Nplayers, int games)
 {
+    STATS *stats = (STATS*)malloc(sizeof(STATS));
+    stats->shortest = INT_MAX;
+    stats->longest = -1;
+    stats->average = -1;
+
     // Generate a deck of cards
     int *deck = (int *)malloc(52 * sizeof(int));
 
-    int count = 0;
+    int totalTurns = 0;
 
     int i;
     for(i=2;i<15;i++)
@@ -346,22 +371,33 @@ int main()
         int y;
         for(y=0;y<4;y++)
         {
-            deck[count] = i;
-            count++;
+            *deck = i;
+            deck++;
         }
     }
-    // Shuffle the deck of cards
-    riffle(deck, 52, sizeof(int), 50);
-    
-    printf("After shuffle: \n");
-    for(i=0;i<52;i++)
+    deck -= 52;
+    // Runs beggar for 2,3..,Nplayers for games times
+    for(i=2;i<(Nplayers+1);i++)
     {
-        printf("%d ", deck[i]);
-    }
-    printf("\n");
+        int y;
+        for(y=0;y<games;y++)
+        {
+            // Shuffle the deck of cards
+            riffle(deck, 52, sizeof(int), 50);
+            int turns = beggar(i, deck, 0);
 
-    // Call function
-    beggar(4, deck, 1);
+            if (turns < stats->shortest)
+                stats->shortest = turns;
+            if (turns > stats->longest)
+                stats->longest = turns;
+
+            totalTurns += turns;
+        }
+    }
+
     free(deck);
-    return 0;
+
+    stats->average = totalTurns / ((Nplayers -1) * games);
+    
+    return stats;
 }

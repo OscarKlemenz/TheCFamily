@@ -1,28 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "riffle.h"
-// MAX_SIZE is 52, as max possible amount of cards is 52
-#define MAX_SIZE 52
-
-struct Queue {
-    int arr[MAX_SIZE];
-    int front, rear;
-};
-typedef struct Queue QUEUE;
-
-void initQueue(QUEUE *);
-int isEmpty(QUEUE *);
-int isFull(QUEUE *);
-void enqueue(QUEUE *, int);
-int dequeue(QUEUE *);
-int peek(QUEUE *);
-int peekBack(QUEUE *);
-void printQueue(QUEUE *);
-int finished(QUEUE *, int);
-QUEUE take_turn(QUEUE *, QUEUE *);
-int beggar(int, int *, int);
-void deckOutput(QUEUE *, QUEUE *, int, int);
-
+#include <limits.h>
+#include "beggar.h"
 
 // Function to initialize a new queue
 void initQueue(QUEUE *q) {
@@ -235,7 +214,8 @@ int beggar(int Nplayers, int *deck, int talkative)
     initQueue(&pile);
 
     currPlayer = 0;
-    printf("Turn %d\n", turns);
+    if(talkative)
+        printf("Turn %d\n", turns);
     // While theres more than one player left
     while(!finished(players, Nplayers))
     {
@@ -333,12 +313,17 @@ int beggar(int Nplayers, int *deck, int talkative)
     return turns;
 }
 
-int main()
+STATS *statistics(int Nplayers, int games)
 {
+    STATS *stats = (STATS*)malloc(sizeof(STATS));
+    stats->shortest = INT_MAX;
+    stats->longest = -1;
+    stats->average = -1;
+
     // Generate a deck of cards
     int *deck = (int *)malloc(52 * sizeof(int));
 
-    int count = 0;
+    int totalTurns = 0;
 
     int i;
     for(i=2;i<15;i++)
@@ -346,22 +331,34 @@ int main()
         int y;
         for(y=0;y<4;y++)
         {
-            deck[count] = i;
-            count++;
+            *deck = i;
+            deck++;
         }
     }
-    // Shuffle the deck of cards
-    riffle(deck, 52, sizeof(int), 50);
-    
-    printf("After shuffle: \n");
-    for(i=0;i<52;i++)
+    deck -= 52;
+    // Runs beggar for 2,3..,Nplayers for games times
+    for(i=2;i<(Nplayers+1);i++)
     {
-        printf("%d ", deck[i]);
-    }
-    printf("\n");
+        int y;
+        for(y=0;y<games;y++)
+        {
+            // Shuffle the deck of cards
+            riffle(deck, 52, sizeof(int), 50);
+            int turns = beggar(i, deck, 0);
 
-    // Call function
-    beggar(4, deck, 1);
+            if (turns < stats->shortest)
+                stats->shortest = turns;
+            if (turns > stats->longest)
+                stats->longest = turns;
+
+            totalTurns += turns;
+        }
+    }
+
     free(deck);
-    return 0;
+
+    stats->average = totalTurns / ((Nplayers -1) * games);
+    
+
+    return stats;
 }
